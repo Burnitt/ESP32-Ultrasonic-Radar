@@ -50,8 +50,6 @@ esp32-ultrasonic-radar/
 │   └── radar.ino
 └── README.md
 ```
- 
-## Demo
 
 ## Skills Demonstrated
  
