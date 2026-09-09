@@ -44,6 +44,10 @@ A self-contained 180-degree ultrasonic radar built with an ESP32, HC-SR04 distan
 5. Power on — the radar starts sweeping immediately with no PC connection needed
 ## Repository Structure
 
+## Final Product
+
+<img width="2880" height="2160" alt="DEMO" src="https://github.com/user-attachments/assets/5b6b66e7-5d9e-4dff-9d6c-e6252bae1601" />
+
 ## DEMO
 
 https://github.com/user-attachments/assets/61579d9f-766a-404d-b473-56b5e393164c
