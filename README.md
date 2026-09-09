@@ -50,7 +50,7 @@ A self-contained 180-degree ultrasonic radar built with an ESP32, HC-SR04 distan
 
 ## DEMO
 
-https://github.com/user-attachments/assets/61579d9f-766a-404d-b473-56b5e393164c
+https://github.com/user-attachments/assets/2db21c9e-7d37-4e30-8978-f094489e32ec
  
 ```
 esp32-ultrasonic-radar/
