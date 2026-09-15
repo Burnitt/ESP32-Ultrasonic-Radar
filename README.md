@@ -48,6 +48,11 @@ A self-contained 180-degree ultrasonic radar built with an ESP32, HC-SR04 distan
 
 <img width="2880" height="2160" alt="DEMO" src="https://github.com/user-attachments/assets/5b6b66e7-5d9e-4dff-9d6c-e6252bae1601" />
 
+<img width="1563" height="891" alt="image" src="https://github.com/user-attachments/assets/7d7cc659-08d0-4aae-82c1-6d221c6d26c3" />
+
+
+> Find online circuit diagram [here](https://wokwi.com/projects/475235087654761473)
+
 ## DEMO
 
 https://github.com/user-attachments/assets/2db21c9e-7d37-4e30-8978-f094489e32ec
