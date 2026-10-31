@@ -1,0 +1,5 @@
+Test 6: 5 V rail droop
+
+rail_overview.png: 100 ms/div, 16 kHz, scan mode. Rail about 5.12 V, regular dips to about 4.92-4.98 V; dark envelope spikes below 4.5 V.
+rail_dip.png: 1 MHz, falling trigger at 5.0 V. Average 5.1188 V, minimum 4.9327 V. Dip is a burst lasting about 1.5 ms right after each servo control pulse (C2).
+Falling trigger at 4.6 V never fired over about 1 minute of sweeping (stayed Armed), so the sub-4.5 V envelope spikes were measurement noise.

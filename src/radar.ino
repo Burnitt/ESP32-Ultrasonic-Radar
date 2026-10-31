@@ -11,11 +11,15 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 const int trigPin = 27;
 const int echoPin = 14;
 const int servoPin = 13;
-long duration;
-int distance;
 Servo myServo;
 
 int objDistance[181]; // stores last known distance per angle, 0 = nothing detected
+
+// ---- test additions ----
+unsigned long lastEchoUs = 0;   // raw echo pulse width from the last ping (us)
+float lastDistanceCm = 0;       // distance with decimals
+bool holdMode = false;          // true = servo parked at holdAngle
+int holdAngle = 90;
 
 void setup() {
   pinMode(trigPin, OUTPUT);
@@ -28,66 +32,85 @@ void setup() {
 
   Wire.begin(32, 33); // SDA, SCL
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    for(;;);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    for (;;);
   }
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
 
-  for (int i = 0; i < 181; i++) { // Reseting the graph
-    objDistance[i] = 0;
-  }
+  clearDetections();
 }
 
 void loop() {
-  // Clear the stored data before this sweep direction starts
-  for (int i = 0; i < 181; i++) {
-    objDistance[i] = 0;
+  if (holdMode) {
+    runStep(holdAngle);
+    return;
   }
 
-  for(int i=15; i<=165; i++){
-    myServo.write(i);
-    delay(30);
-    distance = calculateDistance();
-    sendData(i, distance);
-    updateOLED(i, distance);
+  clearDetections();
+  for (int i = 15; i <= 165 && !holdMode; i++) {
+    runStep(i);
   }
 
-  // Clear again before the return sweep
-  for (int i = 0; i < 181; i++) {
-    objDistance[i] = 0;
-  }
-
-  for(int i=165; i>15; i--){
-    myServo.write(i);
-    delay(30);
-    distance = calculateDistance();
-    sendData(i, distance);
-    updateOLED(i, distance);
+  clearDetections();
+  for (int i = 165; i > 15 && !holdMode; i--) {
+    runStep(i);
   }
 }
 
-int calculateDistance(){
+// One radar step: check for commands, move, ping, report, draw
+void runStep(int angle) {
+  checkSerial();
+  if (holdMode) angle = holdAngle;
+
+  myServo.write(angle);
+  delay(30);
+  int distance = calculateDistance();
+  sendData(angle);
+  updateOLED(angle, distance);
+}
+
+// Commands from the PC: "H90" = hold at 90 degrees, "S" = resume sweep
+void checkSerial() {
+  if (!Serial.available()) return;
+  String cmd = Serial.readStringUntil('\n');
+  cmd.trim();
+  if (cmd.startsWith("H")) {
+    holdAngle = constrain(cmd.substring(1).toInt(), 0, 180);
+    holdMode = true;
+  } else if (cmd == "S") {
+    holdMode = false;
+  }
+}
+
+void clearDetections() {
+  for (int i = 0; i < 181; i++) {
+    objDistance[i] = 0;
+  }
+}
+
+int calculateDistance() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2;
-  return distance;
+  lastEchoUs = pulseIn(echoPin, HIGH, 30000);   // 30 ms timeout (Test 4 finding)
+  lastDistanceCm = lastEchoUs * 0.0343 / 2.0;   // speed of sound at ~20 C (Test 2 finding)
+  return (int)lastDistanceCm;
 }
 
-void sendData(int angle, int dist) {
+// One CSV line per reading: angle,distance_cm,echo_us
+void sendData(int angle) {
   Serial.print(angle);
   Serial.print(",");
-  Serial.print(dist);
-  Serial.print(".");
+  Serial.print(lastDistanceCm, 2);
+  Serial.print(",");
+  Serial.println(lastEchoUs);
 }
 
 void updateOLED(int angle, int dist) {
-  // Store this reading so it persists across frames
   if (dist < 40 && dist > 0) {
     objDistance[angle] = dist;
   } else {
@@ -100,7 +123,6 @@ void updateOLED(int angle, int dist) {
   int centerY = 60;
   int maxRadius = 55;
 
-  // Draw the radar arc (range rings), only across the actual 15-165 sweep
   for (int r = 15; r <= maxRadius; r += 20) {
     for (int a = 15; a <= 165; a += 2) {
       float rad = radians(a);
@@ -110,35 +132,29 @@ void updateOLED(int angle, int dist) {
     }
   }
 
-  // Draw angle reference lines at the sweep limits and center
   float rad15 = radians(15);
   float rad165 = radians(165);
   display.drawLine(centerX, centerY, centerX - maxRadius * cos(rad15), centerY - maxRadius * sin(rad15), SSD1306_WHITE);
   display.drawLine(centerX, centerY, centerX - maxRadius * cos(rad165), centerY - maxRadius * sin(rad165), SSD1306_WHITE);
-  display.drawLine(centerX, centerY, centerX, centerY - maxRadius, SSD1306_WHITE); // 90 deg line
+  display.drawLine(centerX, centerY, centerX, centerY - maxRadius, SSD1306_WHITE);
 
-  // Draw every stored detection, shaded from the object out to the radar edge
   for (int a = 15; a <= 165; a++) {
     if (objDistance[a] > 0) {
       float rad = radians(a);
       int objRadius = map(objDistance[a], 0, 40, 0, maxRadius);
-
       int objX = centerX - objRadius * cos(rad);
       int objY = centerY - objRadius * sin(rad);
       int edgeX = centerX - maxRadius * cos(rad);
       int edgeY = centerY - maxRadius * sin(rad);
-
       display.drawLine(objX, objY, edgeX, edgeY, SSD1306_WHITE);
     }
   }
 
-  // Current sweep line (live servo position, drawn on top)
   float sweepRad = radians(angle);
   int sweepX = centerX - maxRadius * cos(sweepRad);
   int sweepY = centerY - maxRadius * sin(sweepRad);
   display.drawLine(centerX, centerY, sweepX, sweepY, SSD1306_WHITE);
 
-  // Readout
   display.setTextSize(1);
   display.setCursor(0, 0);
   display.print(angle);

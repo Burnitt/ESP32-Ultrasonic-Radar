@@ -1,0 +1,7 @@
+Test 3: AD3 vs firmware echo timing
+Target at 20 cm from sensor, servo held at 90 deg, 50 pulses each
+
+Peak ECHO voltage:  3.44 V
+AD3 mean echo:      1085.8 us (sd 0.5)
+Firmware mean echo: 1085.9 us (sd 0.3)
+Difference: +0.1 us (+0.01 %)

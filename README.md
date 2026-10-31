@@ -2,6 +2,8 @@
  
 A self-contained 150-degree ultrasonic radar built with an ESP32, HC-SR04 distance sensor, SG90 servo motor, and a 0.96" OLED display. The servo sweeps the sensor across a 150-degree arc (15-165°) and renders a live radar visualization directly on the OLED — no PC or external software required.
  
+See [TEST_REPORT.md](TEST_REPORT.md) for test results.
+
 ## Hardware
  
 - Elegoo ESP32 Board
